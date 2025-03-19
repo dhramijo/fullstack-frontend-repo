@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted # Use the self-hosted runner
 
     steps:
       # Step 1: Checkout the code from the repository
@@ -18,11 +18,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'  # Update to Node.js version 20
+          node-version: "20" # Update to Node.js version 20
 
       # Step 3: Clear Yarn cache to avoid caching issues
       - name: Clear Yarn cache
-        run: yarn cache clean  # Clears the Yarn cache to avoid issues during installs
+        run: yarn cache clean # Clears the Yarn cache to avoid issues during installs
 
       # Step 4: Install dependencies using Yarn
       - name: Install Dependencies
@@ -37,19 +37,26 @@ jobs:
       # Step 6: Build Docker image using Podman
       - name: Build Docker image with Podman
         run: |
-          podman build -t frontend-image .  # Build the Docker image locally using Podman
+          podman build -t ${{ secrets.DOCKER_USERNAME }}/frontend-image .  # Build the Docker image locally using Podman
+        working-directory: "." # Ensure quotes if path contains spaces
 
       # Step 7: Log into Docker Hub (or your Docker registry) using Podman
       - name: Podman Login to Docker Hub
         run: |
-          podman login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}  # Authenticate with Docker Hub
+          podman login docker.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}  # Authenticate with Docker Hub
 
       # Step 8: Push Docker image to Docker registry using Podman
       - name: Push Docker image with Podman
         run: |
-          podman push frontend-image  # Push the Docker image to Docker Hub or other registry
+          podman push ${{ secrets.DOCKER_USERNAME }}/frontend-image  # Push the Docker image to Docker Hub or other registry
 
-      # Step 9: Deploy to Kubernetes (Minikube)
+      # Step 9: Set up Kubernetes credentials using the kubeconfig from GitHub secrets
+      - name: Set up Kubernetes
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml  # Write the kubeconfig content to a file
+          export KUBECONFIG=kubeconfig.yaml  # Set the KUBECONFIG environment variable
+
+      # Step 10: Deploy to Kubernetes (Minikube)
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/frontend-deployment.yaml   # Apply frontend deployment YAML
