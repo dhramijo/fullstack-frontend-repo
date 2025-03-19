@@ -14,13 +14,13 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: localhost/frontend:latest
+          image: localhost/frontend-image:latest  # Correct format for Podman in Minikube
           ports:
             - containerPort: 80
           resources:
-            requests:     # Minimum resources the container is guaranteed
+            requests:
               memory: "512Mi"
               cpu: "250m"
-            limits:       # Maximum resources the container can use
+            limits:
               memory: "1Gi"
               cpu: "500m"
