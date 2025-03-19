@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "strict": true,
+    "jsx": "react",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,  // This line allows JS files to be imported
+    "outDir": "./dist",  // Output compiled JavaScript files to the 'dist' directory
+    "rootDir": "./src"  // Ensure the 'src' folder is the root for TypeScript files
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,28 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Build Docker image
+      run: |
+        podman build -t frontend-image .
+
+    - name: Push Docker image
+      run: |
+        podman push frontend-image
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/frontend-deployment.yaml
+        kubectl apply -f k8s/frontend-service.yaml
+        kubectl apply -f k8s/frontend-ingress.yaml

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: localhost/frontend:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:     # Minimum resources the container is guaranteed
+              memory: "512Mi"
+              cpu: "250m"
+            limits:       # Maximum resources the container can use
+              memory: "1Gi"
+              cpu: "500m"
