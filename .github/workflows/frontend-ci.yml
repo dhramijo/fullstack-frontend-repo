@@ -10,35 +10,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the code from the repository
       - name: Checkout Code
         uses: actions/checkout@v2
 
+      # Step 2: Set up Node.js with the correct version (>= 20.0.0 for compatibility)
       - name: Set up Node.js
-        uses: actions/setup-node@v3  # Updated to v3 for Node.js version support
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'  # Specify your Node.js version here
+          node-version: '20'  # Update to Node.js version 20
 
+      # Step 3: Clear Yarn cache to avoid caching issues
       - name: Clear Yarn cache
-        run: yarn cache clean  # Clear Yarn cache to avoid issues
+        run: yarn cache clean  # Clears the Yarn cache to avoid issues during installs
 
+      # Step 4: Install dependencies using Yarn
       - name: Install Dependencies
         run: |
-          yarn install  # Use `npm install` if you're using npm
+          yarn install  # Install dependencies with Yarn
 
+      # Step 5: Build the frontend using Yarn
       - name: Build the frontend
         run: |
-          yarn build  # Use `npm run build` if you're using npm
+          yarn build  # Build the frontend with Yarn (can also use `npm run build` if needed)
 
-      - name: Build Docker image
+      # Step 6: Build Docker image using Podman
+      - name: Build Docker image with Podman
         run: |
-          podman build -t frontend-image .
+          podman build -t frontend-image .  # Build the Docker image locally using Podman
 
-      - name: Push Docker image
+      # Step 7: Log into Docker Hub (or your Docker registry) using Podman
+      - name: Podman Login to Docker Hub
         run: |
-          podman push frontend-image
+          podman login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}  # Authenticate with Docker Hub
 
+      # Step 8: Push Docker image to Docker registry using Podman
+      - name: Push Docker image with Podman
+        run: |
+          podman push frontend-image  # Push the Docker image to Docker Hub or other registry
+
+      # Step 9: Deploy to Kubernetes (Minikube)
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f k8s/frontend-deployment.yaml
-          kubectl apply -f k8s/frontend-service.yaml
-          kubectl apply -f k8s/frontend-ingress.yaml
+          kubectl apply -f k8s/frontend-deployment.yaml   # Apply frontend deployment YAML
+          kubectl apply -f k8s/frontend-service.yaml      # Apply frontend service YAML
+          kubectl apply -f k8s/frontend-ingress.yaml      # Apply frontend ingress YAML
