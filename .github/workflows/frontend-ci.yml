@@ -37,14 +37,12 @@ jobs:
       # Step 6: Start Podman Local Registry (Recommended Solution)
       - name: Start Podman Registry
         run: |
-          # Check if the Podman machine exists, if not, create it
-          if ! podman machine exists podman-machine-default; then
-            echo "Creating Podman machine..."
-            podman machine init --rootful
+          # Initialize Podman machine in rootful mode (will only create if not already initialized)
+          if ! podman machine list | grep -q 'podman-machine-default'; then
+            echo "Initializing Podman machine..."
+            podman machine init --rootful || echo "Podman machine already initialized"
           fi
-
-          # Start the Podman machine
-          podman machine start
+          podman machine start || echo "Podman machine already started"
 
           # Ensure the registry is running (will only run if not already)
           podman run -d -p 5000:5000 --name local-registry registry:2 || echo "Registry already running"
