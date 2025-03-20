@@ -37,8 +37,16 @@ jobs:
       # Step 6: Start Podman Local Registry (Recommended Solution)
       - name: Start Podman Registry
         run: |
-          podman machine set --rootful
+          # Check if the Podman machine exists, if not, create it
+          if ! podman machine exists podman-machine-default; then
+            echo "Creating Podman machine..."
+            podman machine init --rootful
+          fi
+
+          # Start the Podman machine
           podman machine start
+
+          # Ensure the registry is running (will only run if not already)
           podman run -d -p 5000:5000 --name local-registry registry:2 || echo "Registry already running"
 
       # Step 7: Build and Push Image to Podman Registry
