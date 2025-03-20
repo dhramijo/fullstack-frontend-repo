@@ -7,76 +7,65 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted # Use the self-hosted runner
+    runs-on: self-hosted # Use self-hosted runner
 
     steps:
-      # Step 1: Checkout the code from the repository
+      # Step 1: Checkout Code
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js with the correct version (>= 20.0.0 for compatibility)
+      # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "20"
 
-      # Step 3: Clear Yarn cache to avoid caching issues
+      # Step 3: Clear Yarn cache
       - name: Clear Yarn cache
         run: yarn cache clean
 
-      # Step 4: Install dependencies using Yarn
+      # Step 4: Install Dependencies
       - name: Install Dependencies
         run: |
           yarn install
 
-      # Step 5: Build the frontend using Yarn
+      # Step 5: Build the Frontend
       - name: Build the frontend
         run: |
           yarn build
 
-      # Step 6: Start Podman Local Registry (Recommended Solution)
-      - name: Start Podman Registry
+      # Step 6: Ensure Podman Machine is Started
+      - name: Initialize and Start Podman Machine
         run: |
-          # Initialize Podman machine in rootful mode (will only create if not already initialized)
           if ! podman machine list | grep -q 'podman-machine-default'; then
             echo "Initializing Podman machine..."
             podman machine init --rootful || echo "Podman machine already initialized"
           fi
           podman machine start || echo "Podman machine already started"
 
-          # Ensure the registry is running (will only run if not already)
-          podman run -d -p 5000:5000 --name local-registry registry:2 || echo "Registry already running"
-
-      # Step 7: Build and Push Image to Podman Registry
-      - name: Build and Push Image
+      # Step 7: Build Image with Podman
+      - name: Build Docker image with Podman
         run: |
           podman build -t localhost:5000/frontend-image:latest .
-          podman push localhost:5000/frontend-image:latest
 
-      # Step 8 (Optional Fallback): Save and Load Image Manually (Backup in case of issues)
-      - name: Save and Load Image Manually
+      # Step 8: Save and Load Image for Minikube
+      - name: Save and Load Image for Minikube
         run: |
           podman save localhost:5000/frontend-image:latest -o frontend-image.tar
           minikube image load frontend-image.tar
 
-      # Step 9: Set up Kubernetes credentials using kubeconfig
-      - name: Set up Kubernetes
-        run: |
-          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
-          export KUBECONFIG=kubeconfig.yaml
-
-      # Step 10: Deploy to Kubernetes (Minikube)
+      # Step 9: Deploy to Kubernetes
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/frontend-deployment.yaml
           kubectl apply -f k8s/frontend-service.yaml
           kubectl apply -f k8s/frontend-ingress.yaml
 
-      # Step 11: Restart Deployment
+      # Step 10: Restart Deployment
       - name: Restart Frontend Deployment
         run: |
           kubectl rollout restart deployment frontend-deployment
 
-      # Step 12: Verify Deployment
+      # Step 11: Verify Deployment
       - name: Verify Deployment
         run: kubectl get pods
