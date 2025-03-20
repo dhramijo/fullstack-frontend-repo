@@ -37,13 +37,13 @@ jobs:
       # Step 6: Build Docker image using Podman
       - name: Build Docker image with Podman
         run: |
-          podman build -t frontend-image:latest .
+          podman build -t localhost/frontend-image:latest .
         working-directory: "."
 
       # Step 7: Load image into Minikube
       - name: Load Image into Minikube
         run: |
-          minikube image load frontend-image:latest  # Required for Minikube with Podman
+          minikube image load localhost/frontend-image:latest  # Required for Minikube with Podman
 
       # Step 8: Set up Kubernetes credentials using kubeconfig
       - name: Set up Kubernetes
@@ -57,3 +57,12 @@ jobs:
           kubectl apply -f k8s/frontend-deployment.yaml
           kubectl apply -f k8s/frontend-service.yaml
           kubectl apply -f k8s/frontend-ingress.yaml
+
+      # Step 10: Restart Deployment
+      - name: Restart Frontend Deployment
+        run: |
+          kubectl rollout restart deployment frontend-deployment
+
+      # Step 11: Verify Deployment
+      - name: Verify Deployment
+        run: kubectl get pods
