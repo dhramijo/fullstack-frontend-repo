@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: localhost:5000/frontend-image:latest
-          imagePullPolicy: Always
+          image: localhost/frontend-image:latest  # Using Minikube's local registry
+          imagePullPolicy: IfNotPresent  # Ensures Minikube pulls the latest version if not present
           ports:
             - containerPort: 3000
           resources:

@@ -34,38 +34,45 @@ jobs:
         run: |
           yarn build
 
-      # Step 6: Ensure Podman Machine is Started
-      - name: Initialize and Start Podman Machine
+      # Step 6: Ensure Minikube Cluster is Running with cri-o Driver
+      - name: Ensure Minikube Cluster is Running with cri-o Driver
         run: |
-          if ! podman machine list | grep -q 'podman-machine-default'; then
-            echo "Initializing Podman machine..."
-            podman machine init --rootful || echo "Podman machine already initialized"
-          fi
-          podman machine start || echo "Podman machine already started"
+          minikube start --driver=podman --container-runtime=cri-o
 
-      # Step 7: Build Image with Podman
-      - name: Build Docker image with Podman
+      # Step 7: Build Frontend Docker Image with Podman
+      - name: Build Docker Image with Podman
         run: |
-          podman build -t localhost:5000/frontend-image:latest .
+          podman build -t localhost/frontend-image:latest .
 
-      # Step 8: Save and Load Image for Minikube
-      - name: Save and Load Image for Minikube
+      # Step 8: Save the Frontend Image as a Tar File
+      - name: Save Podman Image as Tar
         run: |
-          podman save localhost:5000/frontend-image:latest -o frontend-image.tar
+          podman save -o frontend-image.tar localhost/frontend-image:latest
+
+      # Step 9: Load the Frontend Image into Minikube
+      - name: Load Image into Minikube
+        run: |
           minikube image load frontend-image.tar
 
-      # Step 9: Deploy to Kubernetes
+      # Step 10: Set up Kubernetes Config
+      - name: Set up Kubernetes Config
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+          export KUBECONFIG=kubeconfig.yaml
+
+      # Step 11: Deploy to Kubernetes
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/frontend-deployment.yaml
           kubectl apply -f k8s/frontend-service.yaml
           kubectl apply -f k8s/frontend-ingress.yaml
 
-      # Step 10: Restart Deployment
+      # Step 12: Restart Deployment
       - name: Restart Frontend Deployment
         run: |
           kubectl rollout restart deployment frontend-deployment
 
-      # Step 11: Verify Deployment
+      # Step 13: Verify Deployment
       - name: Verify Deployment
-        run: kubectl get pods
+        run: |
+          kubectl get pods --all-namespaces
